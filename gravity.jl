@@ -1,10 +1,14 @@
-using FileIO, DataFrames, FixedEffectModels, RegressionTables, Chain, Plots
+
 #
 #   Exploring gravity relationship in trade data:
 #       X_od ∝ Y_o * Y_d / Dist_od
 #
 #   Nels Lind, 1/21/2025
 #
+
+cd("/Users/nelslind/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
+using Pkg; Pkg.instantiate()
+using FileIO, DataFrames, FixedEffectModels, RegressionTables, Chain, Plots
 
 # location of data files on your computer
 datadir = "/Users/nelslind/Dropbox/data/"
