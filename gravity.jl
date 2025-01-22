@@ -8,11 +8,14 @@
 
 cd("/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trade")
 
-using Pkg; Pkg.add(["FileIO","DataFrames", "FixedEffectModels", "RegressionTables", "Chain", "Plots"])
-using FileIO, DataFrames, FixedEffectModels, RegressionTables, Chain, Plots
+using Pkg; Pkg.instantiate()
+using Pkg
+Pkg.add("StatFiles")
+
+using CSVFiles,FileIO, DataFrames, FixedEffectModels, RegressionTables, Chain, Plots
 
 # location of data files on your computer
-datadir = "/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trade/data"
+datadir = "/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trade/data/"
 
 # load trade data, three equivalent ways of doing so using standard vs "pipe" notation
 # df = DataFrame(load(datadir*"tradedata/tradeDataSITC.csv"))
