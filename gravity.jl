@@ -35,7 +35,6 @@ aggdf = @chain begin
 end
 
 # next lets merge in GDP and population data from PWT
-
 # look at variables in pwt
 println(names(pwt))
 
@@ -51,6 +50,6 @@ sample = @chain begin
     filter(:t => ==(2005),aggdf)
     filter(:d => ==("USA"),_)
 end
-plt = scatter(log.(aggdf.Yot),log.(aggdf.value),legend=false)
-plot!(plt,log.(aggdf.Yot),log.(aggdf.Yot))
+plt = scatter(log.(sample.Yot),log.(sample.value),legend=false)
+plot!(plt,log.(sample.Yot),log.(sample.Yot))
 
