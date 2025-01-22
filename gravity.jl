@@ -1,11 +1,8 @@
-
-#
 #   Exploring gravity relationship in trade data:
 #       X_od ∝ Y_o * Y_d / Dist_od
 #
 #   Niall Peat, 1/21/2025
 #
-
 cd("/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trade")
 
 using Pkg; Pkg.instantiate()
