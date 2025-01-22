@@ -8,6 +8,7 @@ cd("/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trad
 using Pkg; Pkg.instantiate()
 using Pkg
 Pkg.add("StatFiles")
+import Pkg; Pkg.add("CSVFiles")
 
 using CSVFiles,FileIO, DataFrames, FixedEffectModels, RegressionTables, Chain, Plots
 
