@@ -3,24 +3,25 @@
 #   Exploring gravity relationship in trade data:
 #       X_od ∝ Y_o * Y_d / Dist_od
 #
-#   Nels Lind, 1/21/2025
+#   Niall Peat, 1/21/2025
 #
 
-cd("/Users/nelslind/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
-using Pkg; Pkg.instantiate()
+cd("/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trade")
+
+using Pkg; Pkg.add(["FileIO","DataFrames", "FixedEffectModels", "RegressionTables", "Chain", "Plots"])
 using FileIO, DataFrames, FixedEffectModels, RegressionTables, Chain, Plots
 
 # location of data files on your computer
-datadir = "/Users/nelslind/Dropbox/data/"
+datadir = "/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trade/data"
 
 # load trade data, three equivalent ways of doing so using standard vs "pipe" notation
 # df = DataFrame(load(datadir*"tradedata/tradeDataSITC.csv"))
 # df = load(datadir*"tradedata/tradeDataSITC.csv") |> DataFrame
-df = datadir*"tradedata/tradeDataSITC.csv" |> load |> DataFrame
+df = datadir*"tradeDataSITC.csv" |> load |> DataFrame
 
 # penn world tables and gravity covariates
-pwt = datadir*"PWT/pwt1001.dta" |> load |> DataFrame
-dist = datadir*"CEPII/dist_cepii.dta" |> load |> DataFrame
+pwt = datadir*"pwt1001.dta" |> load |> DataFrame
+dist = datadir*"dist_cepii.dta" |> load |> DataFrame
 
 # aggregate trade data to o-d-t level, two equivalent notations, standard vs "chain"
 # aggdf = combine(groupby(df,[:o,:d,:t]),:value => sum => :value)
