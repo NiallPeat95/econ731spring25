@@ -8,6 +8,7 @@ cd("/Users/niallpeat/Desktop/Second Year Coursework/ECON731 - International Trad
 using Pkg; Pkg.instantiate()
 using Pkg
 Pkg.add("StatFiles")
+
 import Pkg; Pkg.add("CSVFiles")
 
 using CSVFiles,FileIO, DataFrames, FixedEffectModels, RegressionTables, Chain, Plots
@@ -43,11 +44,27 @@ rename!(aggdf,:rgdpe => :Yot,:pop => :Not)
 aggdf = leftjoin(aggdf,rename(pwt[:,vars],:countrycode => :d,:year => :t),on=[:d,:t])
 rename!(aggdf,:rgdpe => :Ydt,:pop => :Ndt)
 
+#merg in dist_cepii
+println(names(dist))
+aggdf = leftjoin(aggdf,rename(dist[:,[:iso_o,:iso_d,:contig,:comlang_off,:comlang_ethno,:distw]],:iso_o => :o,:iso_d => :d),on=[:o,:d])
+
 # USA exports in 2005
 sample = @chain begin
     filter(:t => ==(2005),aggdf)
     filter(:d => ==("USA"),_)
 end
-plt = scatter(log.(sample.Yot),log.(sample.value),legend=false)
-plot!(plt,log.(sample.Yot),log.(sample.Yot))
+plt = scatter(log.(sample.distw),log.(sample.value ./ sample.Yot),legend=false)
+#plot!(plt,log.(sample.Yot),log.(sample.Yot))
+
+#Classic gravity Regression
+vcov = Vcov.cluster(:o,:d)
+f = @formula log(value) ~ log(Yot) + log(Ydt) + log(distw)
+result1 = reg(aggdf,f,vcov)
+
+f = @formula log(value) ~ fe(o)&fe(t)+fe(d)&fe(t)+log(distw)
+result2 = reg(aggdf,f,vcov)
+
+regtable(result1,result2) 
+
+
 
