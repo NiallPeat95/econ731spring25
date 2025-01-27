@@ -138,7 +138,7 @@ df = @chain begin
         [:value95,:t1] => weightedMean => :t1_wmean95,
         :t1_pref => (x->mean(skipmissing(x))) => :t1_pref_mean,
         [:value,:t1_pref] => weightedMean => :t1_pref_wmean,
-        [:value95,:t1_pref] => weightedMean => :t1_pref_wmean96
+        [:value95,:t1_pref] => weightedMean => :t1_pref_wmean95
     )
 end
 
