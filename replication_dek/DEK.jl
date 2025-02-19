@@ -13,11 +13,11 @@
 #   Ym = gross output of manufacturing
 #   Xm = expenditure on manufactured goods
 #
-#   Share of d expenditure sourced from o amongst traded goods (manufactures):
-#   π_od = T_o * (τ_od * W_o^β * P_o^(1-β))^-θ / sum_o( T_o * (τ_od * W_o^β * P_o^(1-β))^-θ )   (1)
+#   Price level of manufactured goods in d:
+#   P_d = sum_o( T_o * (τ_od * W_o^β * P_o^(1-β))^-θ )^(-1/θ)                                   (1)  
 #
-#   Price level of traded goods in d:
-#   P_d = sum_o( T_o * (τ_od * W_o^β * P_o^(1-β))^-θ )^(-1/θ)                                   (2)
+#   Share of d expenditure sourced from o amongst manufactures:
+#   π_od = T_o * ( τ_od * W_o^β * P_o^(1-β) / P_d )^-θ                                          (2)
 #
 #   For each n = 1,...,N we have:
 #
@@ -26,10 +26,24 @@
 #   Xm_n = α*X_n + (1-β)*Ym_n       (accounting identity for expenditure on manufacturing)      (5)
 #   Ym_n = sum_d π_nd * Xm_d        (market clearing for manufactures in n)                     (6)
 #
-#   Note that:
-#   
-#   
+#   Hat Algebra:
 #
+#   For any change in fundamentals to (T̂_n,τ̂_od):
+#
+#   P̂_d = P′_d/P_d
+#       = ( ∑_o T′_o * (τ′_od * W′_o^β * P′_o^(1-β) / P_d )^-θ )^(-1/θ)
+#       = ( ∑_o T_o * (τ_od * W_o^β * P_o^(1-β)  / P_d )^-θ * T̂_o * (τ̂_od * Ŵ_o^β * P̂_o^(1-β) )^-θ )^(-1/θ)
+#       = ( ∑_o π_od * T̂_o * (τ̂_od * Ŵ_o^β * P̂_o^(1-β) )^-θ )^(-1/θ)
+#   
+#   Implied trade shares
+#  π′_od = π_od * π̂_od
+#       = π_od * T̂_o * (τ̂_od * Ŵ_o^β * P̂_o^(1-β) / P̂_d )^-θ
+#       
+#   Implied market clearing condition
+#
+#   Ym′_o = ∑_d π′_od * Xm′_d
+#   Ym′_o = ∑_d π′_od * ( Ym′_d + Dm′_d )
+#   Ym_o = ∑_d π′_od * ( Ym′_d + Dm′_d )
 
 struct DEK{T}
     Π::Matrix{T}
@@ -40,14 +54,25 @@ struct DEK{T}
     β::T
     θ::T
 end
-function prices(m::DEK{T},Ŵ::Vector{T};tol=1e-16,maxit=1e4,report=false) where {T <:Number}
+
+# # for testing
+# m = DEK(Π,Y,D,Dm,.5,.5,5.)
+# Ŵ = rand(Uniform(.9,1.1),N)
+# T̂ = rand(Uniform(.9,1.1),N)
+# τ̂ = rand(Uniform(.9,1.1),N,N)
+# for n = 1:N
+#     τ̂[n,n] = 1.
+# end
+# tol=1e-16;maxit=1e4;report=true
+
+function prices(m::DEK{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T},;tol=1e-16,maxit=1e4,report=false) where {T <:Number}
     P̂ = ones(length(m.Y),1)
     done = false
     iter = 0
     while !done
         iter += 1
         P̂old = copy(P̂)
-        P̂ = (sum(m.Π .* ( Ŵ.^m.β .* P̂old.^(1 - m.β) ).^-m.θ,dims=1)').^-(1/m.θ)
+        P̂ = (sum(m.Π .* T̂ .* ( τ̂ .* Ŵ.^m.β .* P̂old.^(1 - m.β) ).^-m.θ,dims=1)').^-(1/m.θ)
         err = maximum(abs.(P̂ .- P̂old))
         done = (err < tol) || (iter ≥ maxit)
         if report
@@ -58,24 +83,34 @@ function prices(m::DEK{T},Ŵ::Vector{T};tol=1e-16,maxit=1e4,report=false) where
     end
     return P̂[:]
 end
-function tradeShares(m::DEK{T},P̂::Vector{T},Ŵ::Vector{T}) where {T <:Number}
-    out = m.Π .* ( Ŵ.^m.β .* P̂.^(1 - m.β) ).^-m.θ
-    return out ./ sum(out,dims=1)
+
+# P̂ = prices(m,Ŵ,T̂,τ̂,report=true)
+
+function tradeShares(m::DEK{T},P̂::Vector{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T}) where {T <:Number}
+    out = m.Π .* T̂ .* ( τ̂ .*  Ŵ.^m.β .* P̂.^(1 - m.β) ./ P̂' ).^-m.θ
+    return out # ./ sum(out,dims=1) technically don't need normalization
 end
-function excessDemand(m::DEK{T},Ŵ::Vector{T},D′::Vector{T},Dm′::Vector{T}) where {T<:Number}
-    P̂ = prices(m,Ŵ)
-    Π = tradeShares(m,P̂,Ŵ)
+
+function excessDemand(m::DEK{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T},
+                        D′::Vector{T},Dm′::Vector{T}) where {T<:Number}
+    P̂ = prices(m,Ŵ,T̂,τ̂)
+    Π′ = tradeShares(m,P̂,Ŵ,T̂,τ̂)
     Y′ = m.Y .* Ŵ
     X′ = Y′ + D′
 
-    # Xm = α*X +(1-β)*Ym
-    # Xm = Ym + Dm
+    # Xm′ = α*X′ +(1-β)*Ym′
+    # Xm′ = Ym′ + Dm′
+    # ⟹ α*X′ +(1-β)*Ym′ = Ym′ + Dm′ ⟺ α*X′ - Dm′ = β*Ym′
     Ym′ = (m.α*X′ - Dm′)/m.β
 
-    # Ym = Π*Xm
-    return Π*(Ym′ + Dm′) - Ym′
+    # Ym′ = Π′*Xm′ = Π*( Ym′ + Dm′ )
+    return Π′*(Ym′ + Dm′) - Ym′
 end
-function tâtonnment(m::DEK{T},D′::Vector{T},Dm′::Vector{T};λ = T(.1),tol=1e-10,maxit=1e4,report=false,reportrate=1) where {T<:Number}
+
+# excessDemand(m,Ŵ,T̂,τ̂,zeros(N),zeros(N))
+
+
+function tâtonnment(m::DEK{T},T̂::Vector{T},τ̂::Matrix{T},D′::Vector{T},Dm′::Vector{T};λ = T(.1),tol=1e-10,maxit=1e4,report=false,reportrate=1) where {T<:Number}
     Ŵ = ones(length(m.Y))
     done = false
     iter = 0
@@ -83,7 +118,7 @@ function tâtonnment(m::DEK{T},D′::Vector{T},Dm′::Vector{T};λ = T(.1),tol=
     while !done
         iter += 1
         Ŵold = copy(Ŵ)
-        ed = excessDemand(m,Ŵ,D′,Dm′)
+        ed = excessDemand(m,Ŵ,T̂,τ̂,D′,Dm′)
         Ŵ = Ŵold .* (1 .+ λ .* ed ./ (Ŵold .* m.Y))
         err = maximum(abs.(Ŵ .- Ŵold))
         done = (err < tol) || (iter ≥ maxit)

@@ -14,21 +14,44 @@ using Distributions, LinearAlgebra
 
 include("DEK.jl")
 
-# example
-N = 100
+# simulate data
+N = 20
 Y = rand(LogNormal(0,2.),N)
-D = rand(Uniform(-.1,.1),N) .* Y
+D = rand(Uniform(-.02,.02),N) .* Y
 D = D .- mean(D)
-Dm = rand(Uniform(-.1,.1),N) .* Y
-Dm = Dm .- mean(Dm)
-Π = I + .1*rand(N,N)
+X = Y + D
+Π = I + rand(Pareto(1,.001),N,N)
 Π = Π ./ sum(Π,dims=1)
-m = DEK(Π,Y,D,Dm,.5,.5,1.)
+extrema(diag(Π))
+
+# values in DEK
+α = .188
+β = .312
+θ = 3.6
+
+# implied manufacturing deficits
+Dm = (I - (1-β)*Π)\( α * (X - Π*X))
+m = DEK(Π,Y,D,Dm,α,β,θ)
+extrema(excessDemand(m,ones(N),ones(N),ones(N,N),D,Dm))
+
+# DEK counterfactual of zeroing out current accounts assuming CA = - D
+Dm′ = Dm - D
 D′ = zeros(N)
-Dm′ = zeros(N)
-@time Ŵ = tâtonnment(m,D′,Dm′,report=true,reportrate=1)
+T̂ = ones(N)
+τ̂ = ones(N,N)
+Ŵ = tâtonnment(m,T̂,τ̂,D′,Dm′,report=true,reportrate=1,λ=.001)
+P̂ = prices(m,Ŵ,T̂,τ̂)
+scatter(CA,Ŵ./P̂,legend=false)
 
-scatter(D,Ŵ.*Y,legend=false)
-scatter(Dm,Ŵ.*Y,legend=false)
+# reduce trade costs by 10%
+D′ = copy(D)
+Dm′ = copy(Dm)
+T̂ = ones(N)
+τ̂ = I + (ones(N,N) - I).*fill(.9,N,N)
+Ŵ = tâtonnment(m,T̂,τ̂,D′,Dm′,report=true,reportrate=1,λ=.001)
+P̂ = prices(m,Ŵ,T̂,τ̂)
+scatter(diag(Π),Ŵ./P̂,legend=false)
 
-scatter(log.(Y),log.(Ŵ),legend=false)
+
+
+
