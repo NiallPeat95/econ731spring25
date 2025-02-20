@@ -1,44 +1,35 @@
 #
-#   Defines the DEK type for representing the Dekle, Eaton, and Kortum (2007) model
+#   Defines the MSEK type for representing a multisector EK model as in 
+#       Caliendo Parro (2015).
 #
-#   Nels Lind, 2/17/2025
+#   Nels Lind, 2/20/2025
 #
-#   There are manufactured goods, and final goods. Value added share in manufacturing is β,
-#       manufactured good share in final goods is α. θ is the CES trade elasticity. Only
-#       manufactured goods can be traded.
+#   j = 1,…,J, sectors
 #
-#   W,L = price and quantitiy of primary factor (labor)
-#   Y = income = W*L
-#   X = final good expenditure
-#   Ym = gross output of manufacturing
-#   Xm = expenditure on manufactured goods
+#   P_jn = ( ∑_o T_jo ( κ_jon C_jo )^-θ_j )^(-1/θ_j)
 #
-#   Price level of manufactured goods in d:
-#   P_d = ∑_o( T_o * (τ_od * W_o^β * P_o^(1-β))^-θ )^(-1/θ)                                   (1)  
+#   where κ_jon combines physical trade costs and tariffs in sector j
 #
-#   Share of d expenditure sourced from o amongst manufactures:
-#   π_od = T_o * ( τ_od * W_o^β * P_o^(1-β) / P_d )^-θ                                          (2)
+#   κ_jod = τ_jod * (1 + t_jod)
 #
-#   For each n = 1,...,N we have:
+#   Within sector j, fraction of goods sourced from o by d
 #
-#   X_n = Y_n + D_n                 (definition of trade deficit)                               (3)
-#   Xm_n = Ym_n + Dm_n              (definition of manufacturing trade deficit)                 (4)
-#   Xm_n = α*X_n + (1-β)*Ym_n       (accounting identity for expenditure on manufacturing)      (5)
-#   Ym_n = sum_d π_nd * Xm_d        (market clearing for manufactures in n)                     (6)
+#   π_jod = T_jo ( τ_jon C_jo )^-θ_j / P_jn )^(-1/θ_j)
 #
-#   Hat Algebra:
+#   Cobb-Douglas preferences for sectoral composites with shares μ_jn
 #
-#   For any change in fundamentals to (T̂_n,τ̂_od):
+#   P_n = ∏_j P_jn^μ_jn
 #
-#   P̂_d = P′_d/P_d
-#       = ( ∑_o T′_o * (τ′_od * W′_o^β * P′_o^(1-β) / P_d )^-θ )^(-1/θ)
-#       = ( ∑_o T_o * (τ_od * W_o^β * P_o^(1-β)  / P_d )^-θ * T̂_o * (τ̂_od * Ŵ_o^β * P̂_o^(1-β) )^-θ )^(-1/θ)
-#       = ( ∑_o π_od * T̂_o * (τ̂_od * Ŵ_o^β * P̂_o^(1-β) )^-θ )^(-1/θ)
-#   
-#   Implied trade shares
-#  π′_od = π_od * π̂_od
-#       = π_od * T̂_o * (τ̂_od * Ŵ_o^β * P̂_o^(1-β) / P̂_d )^-θ
-#       
+#   π_od = ∑_j π_jod * μ_jn
+#
+#   Cobb-Douglas production with γ_jkn = cost share of sector k in sector j
+#       within country n. Share of value added = 1 - ∑_k γ_jkn
+#
+#   C_jn = W_n^(1-1 - ∑_k γ_jkn) * ∏_k P_kn^γ_jkn
+#
+#   Expenditure on sector j by n
+#
+#   X_jn = ∑_k γ_jkn ∑_i X_in
 
 struct DEK{T}
     Π::Matrix{T}

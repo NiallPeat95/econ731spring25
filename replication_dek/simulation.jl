@@ -4,7 +4,6 @@
 #   Nels Lind, 2/17/2025
 #
 
-
 username = "nelslind"
 cd("/Users/$username/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
 using Pkg
@@ -27,7 +26,7 @@ extrema(diag(Π))
 # values in DEK
 α = .188
 β = .312
-θ = 3.6
+θ = 8.28
 
 # implied manufacturing deficits
 Dm = (I - (1-β)*Π)\( α * (X - Π*X))
