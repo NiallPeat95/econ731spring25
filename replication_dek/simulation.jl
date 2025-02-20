@@ -5,12 +5,12 @@
 #
 
 
-username = "nelslind"
-cd("/Users/$username/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
-using Pkg
-Pkg.activate("."); Pkg.instantiate()
-using FileIO, DataFrames, Chain, Plots
-using Distributions, LinearAlgebra
+cd("/Users/niallpeat/Documents/GitHub/econ731spring25/replication_dek/")
+#using Pkg; Pkg.add(["FileIO", "DataFrames", "Chain", "Plots", "Distributions", "LinearAlgebra"])
+#using FileIO, DataFrames, Chain, Plots
+#using Distributions, LinearAlgebra
+
+using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 include("DEK.jl")
 
@@ -39,9 +39,9 @@ Dm′ = Dm - D
 D′ = zeros(N)
 T̂ = ones(N)
 τ̂ = ones(N,N)
-Ŵ = tâtonnment(m,T̂,τ̂,D′,Dm′,report=true,reportrate=1,λ=.001)
-P̂ = prices(m,Ŵ,T̂,τ̂)
-scatter(CA,Ŵ./P̂,legend=false)
+Ŵ = tâtonnment(m,T̂,τ̂,D′,Dm′, maxit = 100000,report=true,reportrate=1,λ=.001)
+P̂ = prices(m,Ŵ,T̂,τ̂,maxit = 100000)
+scatter(diag(Π),Ŵ./P̂,legend=false)
 
 # reduce trade costs by 10%
 D′ = copy(D)
