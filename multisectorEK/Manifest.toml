@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "1c918311926ba2423648bf0b287226625dc25e77"
+project_hash = "0d43963ad8b572bc1321c30f3502cee665804be2"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -38,24 +38,6 @@ deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jl
 git-tree-sha1 = "009060c9a6168704143100f36ab08f06c2af4642"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.18.2+1"
-
-[[deps.CategoricalArrays]]
-deps = ["DataAPI", "Future", "Missings", "Printf", "Requires", "Statistics", "Unicode"]
-git-tree-sha1 = "1568b28f91293458345dabba6a5ea3f183250a61"
-uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
-version = "0.10.8"
-
-    [deps.CategoricalArrays.extensions]
-    CategoricalArraysJSONExt = "JSON"
-    CategoricalArraysRecipesBaseExt = "RecipesBase"
-    CategoricalArraysSentinelArraysExt = "SentinelArrays"
-    CategoricalArraysStructTypesExt = "StructTypes"
-
-    [deps.CategoricalArrays.weakdeps]
-    JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-    RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-    SentinelArrays = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
-    StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
 
 [[deps.Chain]]
 git-tree-sha1 = "9ae9be75ad8ad9d26395bf625dea9beac6d519f1"
@@ -214,11 +196,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "d55dffd9ae73ff72f1c0482454dcf2ec6c6c4a63"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.6.5+0"
-
-[[deps.ExprTools]]
-git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
-uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
-version = "0.1.10"
 
 [[deps.FFMPEG]]
 deps = ["FFMPEG_jll"]
@@ -597,12 +574,6 @@ version = "1.2.0"
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 version = "1.11.0"
 
-[[deps.Mocking]]
-deps = ["Compat", "ExprTools"]
-git-tree-sha1 = "2c140d60d7cb82badf06d8783800d0bcd1a7daa2"
-uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
-version = "0.8.1"
-
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2023.12.12"
@@ -807,12 +778,6 @@ version = "2.11.2"
     [deps.QuadGK.weakdeps]
     Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 
-[[deps.RData]]
-deps = ["CategoricalArrays", "CodecZlib", "DataAPI", "DataFrames", "Dates", "FileIO", "Requires", "TimeZones", "Unicode"]
-git-tree-sha1 = "9a6220c8f59c38ddf6217638042ae6788973f617"
-uuid = "df47a6cb-8c03-5eed-afd8-b6050d6c41da"
-version = "1.0.0"
-
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "StyledStrings", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
@@ -988,12 +953,6 @@ deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 version = "1.0.3"
 
-[[deps.TZJData]]
-deps = ["Artifacts"]
-git-tree-sha1 = "7def47e953a91cdcebd08fbe76d69d2715499a7d"
-uuid = "dc5dba14-91b3-4cab-a142-028a31da12f7"
-version = "1.4.0+2025a"
-
 [[deps.TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
 git-tree-sha1 = "c06b2f539df1c6efa794486abfb6ed2022561a39"
@@ -1021,16 +980,6 @@ version = "0.1.1"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 version = "1.11.0"
-
-[[deps.TimeZones]]
-deps = ["Artifacts", "Dates", "Downloads", "InlineStrings", "Mocking", "Printf", "Scratch", "TZJData", "Unicode", "p7zip_jll"]
-git-tree-sha1 = "38bb1023fb94bfbaf2a29e1e0de4bbba6fe0bf6d"
-uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
-version = "1.21.2"
-weakdeps = ["RecipesBase"]
-
-    [deps.TimeZones.extensions]
-    TimeZonesRecipesBaseExt = "RecipesBase"
 
 [[deps.TranscodingStreams]]
 git-tree-sha1 = "0c45878dcfdcfa8480052b6ab162cdd138781742"

@@ -4,12 +4,13 @@
 #   Nels Lind, 2/18/2025
 #
 
-username = "nelslind"
-cd("/Users/$username/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
-using Pkg
-Pkg.activate("."); Pkg.instantiate()
+cd("/Users/niallpeat/Documents/GitHub/econ731spring25/multisectorEK/")
+using Pkg; Pkg.add(["FileIO","DataFrames","Chain","Plots","Distributions","LinearAlgebra"])
+
+using Pkg; Pkg.activate("."); Pkg.instantiate()
 using FileIO, DataFrames, Chain, Plots
 using Distributions, LinearAlgebra
+
 
 # location of data files on your computer
 datadir = "/Users/$username/Dropbox/data/"
