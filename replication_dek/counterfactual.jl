@@ -4,7 +4,7 @@
 #   Nels Lind, 2/18/2025
 #
 
-username = "nelslind"
+username = "nlind"
 cd("/Users/$username/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
@@ -45,7 +45,7 @@ totalNames = @chain begin
     unique
     Dict(x.i => x.IndustryDescription for x in eachrow(_))
 end
-Mtotal = length(keys(inputNames))
+Mtotal = length(keys(totalNames))
 
 # For any given column (industry/use × destination), the industry intermediate inputs are
 #   the rows corresponding to:
