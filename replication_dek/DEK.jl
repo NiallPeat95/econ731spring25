@@ -49,17 +49,6 @@ struct DEK{T}
     β::T
     θ::T
 end
-
-# # for testing
-# m = DEK(Π,Y,D,Dm,.5,.5,5.)
-# Ŵ = rand(Uniform(.9,1.1),N)
-# T̂ = rand(Uniform(.9,1.1),N)
-# τ̂ = rand(Uniform(.9,1.1),N,N)
-# for n = 1:N
-#     τ̂[n,n] = 1.
-# end
-# tol=1e-16;maxit=1e4;report=true
-
 function prices(m::DEK{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T},;tol=1e-16,maxit=1e4,report=false) where {T <:Number}
     P̂ = ones(length(m.Y),1)
     done = false
@@ -78,14 +67,10 @@ function prices(m::DEK{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T},;tol=1e-
     end
     return P̂[:]
 end
-
-# P̂ = prices(m,Ŵ,T̂,τ̂,report=true)
-
 function tradeShares(m::DEK{T},P̂::Vector{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T}) where {T <:Number}
     out = m.Π .* T̂ .* ( τ̂ .*  Ŵ.^m.β .* P̂.^(1 - m.β) ./ P̂' ).^-m.θ
-    return out # ./ sum(out,dims=1) technically don't need normalization
+    return out ./ sum(out,dims=1)
 end
-
 function excessDemand(m::DEK{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T},
                         D′::Vector{T},Dm′::Vector{T}) where {T<:Number}
     P̂ = prices(m,Ŵ,T̂,τ̂)
@@ -101,11 +86,7 @@ function excessDemand(m::DEK{T},Ŵ::Vector{T},T̂::Vector{T},τ̂::Matrix{T},
     # Ym′ = Π′*Xm′ = Π*( Ym′ + Dm′ )
     return Π′*(Ym′ + Dm′) - Ym′
 end
-
-# excessDemand(m,Ŵ,T̂,τ̂,zeros(N),zeros(N))
-
-
-function tâtonnment(m::DEK{T},T̂::Vector{T},τ̂::Matrix{T},D′::Vector{T},Dm′::Vector{T};λ = T(.1),tol=1e-10,maxit=1e4,report=false,reportrate=1) where {T<:Number}
+function tâtonnment(m::DEK{T},T̂::Vector{T},τ̂::Matrix{T},D′::Vector{T},Dm′::Vector{T};λ = T(.0001),tol=1e-6,maxit=1e6,report=false,reportrate=1) where {T<:Number}
     Ŵ = ones(length(m.Y))
     done = false
     iter = 0

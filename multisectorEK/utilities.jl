@@ -9,3 +9,4 @@ function addDims(A::T,pos::Integer,count::Integer) where {T<:AbstractArray}
     sz = size(A)
     return reshape(A,(sz[1:pos-1]...,fill(1,count)...,sz[pos:end]...))
 end
+blockmatrix(A::Matrix{Matrix{T}}) where T = hvcat(size(A,2),permutedims(A)...)

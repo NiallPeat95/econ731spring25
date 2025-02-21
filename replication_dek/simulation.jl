@@ -1,5 +1,5 @@
 #
-#   Using hat algebra to solve DEK with simulated data
+#   Using hat algebra to solve DEK model with simulated data
 #
 #   Nels Lind, 2/17/2025
 #

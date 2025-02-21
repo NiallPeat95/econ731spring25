@@ -1,10 +1,10 @@
 #
-#   Using hat algebra to solve DEK
+#   Using hat algebra to solve DEK model
 #
 #   Nels Lind, 2/18/2025
 #
 
-username = "nlind"
+username = "nelslind"
 cd("/Users/$username/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
@@ -240,7 +240,7 @@ Dm′ = Dm - D
 D′ = zeros(N)
 T̂ = ones(N)
 τ̂ = ones(N,N)
-Ŵ = tâtonnment(m,T̂,τ̂,D′,Dm′,report=true,reportrate=1,λ=.001)
+Ŵ = tâtonnment(m,T̂,τ̂,D′,Dm′,report=true,reportrate=1,λ=.001,maxit=1e6,tol=1e-7)
 P̂ = prices(m,Ŵ,T̂,τ̂)
 fsz = 8
 psz = (600,500)

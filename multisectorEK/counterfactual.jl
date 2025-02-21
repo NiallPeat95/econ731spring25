@@ -1,10 +1,10 @@
 #
-#   Using hat algebra to solve DEK
+#   Using hat algebra to solve MSEK model
 #
-#   Nels Lind, 2/18/2025
+#   Nels Lind, 2/21/2025
 #
 
-username = "nlind"
+username = "nelslind"
 cd("/Users/$username/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()

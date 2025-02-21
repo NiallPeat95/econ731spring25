@@ -2,7 +2,7 @@
 #   Defines the MSEK type for representing a multisector EK model as in 
 #       Caliendo Parro (2015).
 #
-#   Nels Lind, 2/20/2025
+#   Nels Lind, 2/21/2025
 #
 #   j = 1,…,J, sectors
 #
@@ -77,39 +77,6 @@ struct MSEK{T}
     μ::Matrix{T}
     θ::Vector{T}
 end
-
-# for testing
-
-# simulate data
-J = 3
-N = 10
-t = rand(Uniform(.01,.2),J,N,N)
-Π = [I + rand(Pareto(1,.001),N,N) for j=1:J]
-Π = [Π[j] ./ sum(Π[j],dims=1) for j=1:J]
-Π = cat(addDim.(Π,1)...,dims=1)
-Y = rand(LogNormal(0,2.),N)
-D = rand(Uniform(-.02,.02),N) .* Y
-D = D .- mean(D)
-γ = [ I + rand(Pareto(1,.01),J,J) for n=1:N ]
-γ = cat([ rand(Uniform(.2,.3),1,J) .* γ[n] ./ sum(γ[n],dims=1) for n=1:N ]...,dims=3)
-μ = rand(Uniform(0,1),J,N)
-μ = μ ./ sum(μ,dims=1)
-θ = rand(Uniform(2,8),J)
-
-m = MSEK(t,Π,Y,D,γ,μ,θ)
-
-Ŵ = rand(Uniform(.99,1.01),N)
-T̂ = rand(Uniform(.99,1.01),J,N)
-τ̂ = rand(Uniform(.99,1.01),J,N,N)
-for n = 1:N
-    τ̂[:,n,n] .= 1.
-end
-t′ = m.t .+ .001
-D′ = copy(m.D)
-tol=1e-16;maxit=1e4;report=true
-
-sum(Π,dims=2)
-
 function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3};tol=1e-16,maxit=1e4,report=false) where {T <:Number}
     #   κ̂_jod = τ̂_jod + (1+t′_jod)/(1+t_jod)
     #   Ĉ_jn = Ŵ_n^(1-1 - ∑_k γ_jkn) * ∏_k P̂_kn^γ_jkn
@@ -137,47 +104,68 @@ function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T},T̂::Matrix{T},τ�
     κ̂ = τ̂ .* (1 .+ t′)./(1 .+ m.t)
     Ĉ = Ŵ'.^(1 .- dsum(m.γ,dims=1)) .* exp.( dsum( m.γ .* addDim(log.(P̂),2) ,dims=1) )
     out = m.Π .* T̂ .* ( κ̂ .* Ĉ ./ addDim(P̂,2) ).^(.-m.θ)
-    return out # ./ sum(out,dims=2)
+    return out ./ sum(out,dims=2)
 end
 function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
-                        D′::Vector{T},Dm′::Vector{T}) where {T<:Number}
+                        t′::Array{T,3},D′::Vector{T}) where {T<:Number}
     P̂ = prices(m,Ŵ,T̂,τ̂,t′)
     Π′ = tradeShares(m,P̂,Ŵ,T̂,τ̂,t′)
-
     Π̃′ = Π′ ./ (1 .+ t′) 
-
 
 #   X′_in = ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd  + μ_in * ( Ŵ_n*W_n*L_n + ∑_jo t′_jon π̃′_jon * X′_jn  + D′_n )
 
 #   X′_in - ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd - μ_in * ∑_jo t′_jon π̃′_jon * X′_jn 
 #        =  μ_in * ( Ŵ_n*W_n*L_n + D′_n )
 
-    Δ = vec(μ .* ( Ŵ.*m.Y + D′ )')
+    # Caliendo Parro (2015) vectorize this equation to form an equation of the form
+    #   A*vec(X′) = vec(μ .* ( Ŵ.*m.Y + D′ )')
+    # where the jd entry of  X′ is X′_jd. Julia vecorizes column wise so the
+    # jd entry of X′_jd is in the j + J*(d-1) position of vec(X′).
+
+    # Consider ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd. This is a linear operator on vec(X′)
+    # whose matrix representation has in × dj element of γ_ijn*π̃_jnd. We can organize
+    # this matrix into J × J submatrices where the (n,d)th submatrix is
+    #
+    # γ[:,:,n] .* addDim(Π̃′[:,n,d],1)
+    #
+    A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N])
+    
+    # Next, consider μ_in * ∑_jo t′_jon π̃′_jon * X′_jn. The matrix representation
+    # of this linear operator has in × jd element of μ_in * ∑_o t′_jon π̃′_jon. Note
+    # that this value doesn't depend on d. The (n,d)th J × J submatrix is
+    #
+    # μ[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)'
+    A2 = blockmatrix([ μ[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)' for n=1:N, d=1:N])
+
+    vX′ = (I-A1-A2)\vec(μ .* ( Ŵ.*m.Y + D′ )')
 
 #   X′_jod = π̃′_jod * X′_jd 
 #   excessDemand = ∑_jd X′_jnd + D′_n - ∑_jo X′_jon
-
-
-    return 
+    X′ = Π̃′ .* addDim(reshape(vX′,J,N),2)
+    return dsum(X′,dims=(1,2)) + D′ - dsum(X′,dims=(1,3))
 end
-
-# excessDemand(m,Ŵ,T̂,τ̂,zeros(N),zeros(N))
-
-
-function tâtonnment(m::DEK{T},T̂::Vector{T},τ̂::Matrix{T},D′::Vector{T},Dm′::Vector{T};λ = T(.1),tol=1e-10,maxit=1e4,report=false,reportrate=1) where {T<:Number}
+function tâtonnment(m::MSEK{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3},D′::Vector{T};
+        λ = T(.0001),decay=T(.1),inflate=T(.01),tol=1e-8,maxit=1e6,report=false,reportrate=1) where {T<:Number}
     Ŵ = ones(length(m.Y))
     done = false
     iter = 0
+    err = Inf
     t0 = time()
     while !done
         iter += 1
         Ŵold = copy(Ŵ)
-        ed = excessDemand(m,Ŵ,T̂,τ̂,D′,Dm′)
+        errold = copy(err)
+        ed = excessDemand(m,Ŵ,T̂,τ̂,t′,D′)
         Ŵ = Ŵold .* (1 .+ λ .* ed ./ (Ŵold .* m.Y))
         err = maximum(abs.(Ŵ .- Ŵold))
         done = (err < tol) || (iter ≥ maxit)
+        if err < errold
+            λ *= 1+inflate
+        else
+            λ *= 1-decay
+        end
         if report && (time()- t0) > reportrate
-            @show iter,err
+            @show iter,err,λ
             # @show Ŵ
             t0 = time()
         end
