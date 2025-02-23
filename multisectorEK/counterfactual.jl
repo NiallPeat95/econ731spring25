@@ -1,19 +1,19 @@
 #
-#   Using hat algebra to solve DEK
+#   Using hat algebra to solve MSEK model
 #
-#   Nels Lind, 2/18/2025
+#   Nels Lind, 2/21/2025
 #
 
-cd("/Users/niallpeat/Documents/GitHub/econ731spring25/multisectorEK/")
-using Pkg; Pkg.add(["FileIO","DataFrames","Chain","Plots","Distributions","LinearAlgebra"])
 
-using Pkg; Pkg.activate("."); Pkg.instantiate()
+cd("/Users/niallpeat/Documents/GitHub/econ731spring25/")
+using Pkg
+Pkg.activate("."); Pkg.instantiate()
+using Pkg; Pkg.add(["DataFrames","Chain","Plots","Distributions","LinearAlgebra","FileIO"])
 using FileIO, DataFrames, Chain, Plots
 using Distributions, LinearAlgebra
 
-
 # location of data files on your computer
-datadir = "/Users/$username/Dropbox/data/"
+datadir = "/Users/niallpeat/Dropbox/International Trade/Data/"
 
 # load WIOD
 years = 2000:2014
@@ -46,7 +46,7 @@ totalNames = @chain begin
     unique
     Dict(x.i => x.IndustryDescription for x in eachrow(_))
 end
-Mtotal = length(keys(inputNames))
+Mtotal = length(keys(totalNames))
 
 # For any given column (industry/use × destination), the industry intermediate inputs are
 #   the rows corresponding to:
@@ -221,12 +221,7 @@ dfTrade = @chain begin
 end
 dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
 
-save(,dfCountry)
-
-
-
-
-
+save(dfCountry)
 
 
 # # verify that TOT corresponds to output
