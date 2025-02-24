@@ -223,7 +223,10 @@ dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
 
 save(dfCountry)
 
+names(dfCountry)
 
+
+dfCountry
 # # verify that TOT corresponds to output
 # dfOutput = @chain begin
 #     filter(x->in(x.output,keys(industryNames)) && x.inputDesc == "Output at basic prices",df)
