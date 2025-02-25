@@ -128,7 +128,8 @@ function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
     #
     # γ[:,:,n] .* addDim(Π̃′[:,n,d],1)
     #
-    A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N])
+    A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N]) # Feed-through in intermediate demand.
+
     
     # Next, consider μ_in * ∑_jo t′_jon π̃′_jon * X′_jn. The matrix representation
     # of this linear operator has in × jd element of μ_in * ∑_o t′_jon π̃′_jon. Note

@@ -3,8 +3,6 @@
 #
 #   Nels Lind, 2/21/2025
 #
-
-
 cd("/Users/niallpeat/Documents/GitHub/econ731spring25/")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
@@ -46,7 +44,7 @@ totalNames = @chain begin
     unique
     Dict(x.i => x.IndustryDescription for x in eachrow(_))
 end
-Mtotal = length(keys(totalNames))
+Mtotal = length(keys(inputNames))
 
 # For any given column (industry/use × destination), the industry intermediate inputs are
 #   the rows corresponding to:
@@ -221,12 +219,14 @@ dfTrade = @chain begin
 end
 dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
 
-save(dfCountry)
-
-names(dfCountry)
+save(,dfCountry)
 
 
-dfCountry
+
+
+
+
+
 # # verify that TOT corresponds to output
 # dfOutput = @chain begin
 #     filter(x->in(x.output,keys(industryNames)) && x.inputDesc == "Output at basic prices",df)
