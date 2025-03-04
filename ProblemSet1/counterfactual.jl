@@ -218,10 +218,14 @@ dfTrade = @chain begin
     leftjoin(_,rename(dfCountry[:,[:n,:t,:ExpenditureManuf]],:n=>:d),on=[:d,:t])
 end
 dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
+dfTrade.TradeShareNonManuf = 
 
-save(dfCountry)
+using Pkg; Pkg.add("CSV")
+using CSV
+CSV.write("dfCountry.csv", dfCountry)
+names(dfCountry)
 
-
+test
 
 # # verify that TOT corresponds to output
 # dfOutput = @chain begin
