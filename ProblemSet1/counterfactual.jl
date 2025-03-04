@@ -1,7 +1,7 @@
 #
 #   Using hat algebra to solve MSEK model
 #
-#   Nels Lind, 2/21/2025
+#   Niall Peat, 3/4/2025
 #
 cd("/Users/niallpeat/Documents/GitHub/econ731spring25/ProblemSet1/")
 using Pkg
