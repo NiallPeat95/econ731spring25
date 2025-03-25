@@ -6,8 +6,8 @@
 cd("/Users/niallpeat/Documents/GitHub/econ731spring25/")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
-using Pkg; Pkg.add(["DataFrames","Chain","Plots","Distributions","LinearAlgebra","FileIO"])
-using FileIO, DataFrames, Chain, Plots
+using Pkg; Pkg.add(["DataFrames","Chain","Plots","Distributions","LinearAlgebra","FileIO","CSV"])
+using FileIO, DataFrames, Chain, Plots, CSV
 using Distributions, LinearAlgebra
 
 # location of data files on your computer
@@ -44,7 +44,7 @@ totalNames = @chain begin
     unique
     Dict(x.i => x.IndustryDescription for x in eachrow(_))
 end
-Mtotal = length(keys(inputNames))
+Mtotal = length(keys(totalNames))
 
 # For any given column (industry/use × destination), the industry intermediate inputs are
 #   the rows corresponding to:
@@ -219,12 +219,9 @@ dfTrade = @chain begin
 end
 dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
 
-save(,dfCountry)
+CSV.write("dfCountry.csv", dfCountry)
 
-
-
-
-
+test
 
 
 # # verify that TOT corresponds to output
