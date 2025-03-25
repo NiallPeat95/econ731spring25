@@ -4,9 +4,11 @@
 #   Nels Lind, 2/21/2025
 #
 
-cd("/Users/niallpeat/Documents/GitHub/econ731spring25/")
+
+cd("/Users/niallpeat/Documents/GitHub/econ731spring25/multisectorEK")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
+using Pkg; Pkg.add(["FileIO","DataFrames","Chain","Plots","Distributions","LinearAlgebra"])
 using FileIO, DataFrames, Chain, Plots
 using Distributions, LinearAlgebra
 
@@ -26,7 +28,6 @@ D = D .- mean(D)
 γ = cat([ rand(Uniform(.2,.3),1,J) .* γ[n] ./ sum(γ[n],dims=1) for n=1:N ]...,dims=3)
 μ = rand(Uniform(0,1),J,N)
 μ = μ ./ sum(μ,dims=1)
-#μ' = μ .* 1.01
 θ = rand(Uniform(2,8),J)
 
 m = MSEK(t,Π,Y,D,γ,μ,θ)
@@ -45,4 +46,3 @@ selfShare = [ Π[:,n,n]' * μ[:,n] for n=1:N ]
 scatter(log.(Y),Ŵ./P̂,legend=false)
 scatter(D./Y,Ŵ./P̂,legend=false)
 scatter(selfShare,Ŵ./P̂,legend=false)
-

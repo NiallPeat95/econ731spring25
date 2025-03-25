@@ -3,15 +3,16 @@
 #
 #   Nels Lind, 2/21/2025
 #
-cd("/Users/niallpeat/Documents/GitHub/econ731spring25/")
+
+username = "nelslind"
+cd("/Users/$username/Dropbox/teaching/emory/2024-2025/Econ 731 Spring 2025/code/econ731spring25/")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
-using Pkg; Pkg.add(["DataFrames","Chain","Plots","Distributions","LinearAlgebra","FileIO","CSV"])
-using FileIO, DataFrames, Chain, Plots, CSV
+using FileIO, DataFrames, Chain, Plots
 using Distributions, LinearAlgebra
 
 # location of data files on your computer
-datadir = "/Users/niallpeat/Dropbox/International Trade/Data/"
+datadir = "/Users/$username/Dropbox/data/"
 
 # load WIOD
 years = 2000:2014
@@ -44,7 +45,7 @@ totalNames = @chain begin
     unique
     Dict(x.i => x.IndustryDescription for x in eachrow(_))
 end
-Mtotal = length(keys(totalNames))
+Mtotal = length(keys(inputNames))
 
 # For any given column (industry/use × destination), the industry intermediate inputs are
 #   the rows corresponding to:
@@ -219,7 +220,12 @@ dfTrade = @chain begin
 end
 dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
 
-CSV.write("dfCountry.csv", dfCountry)
+save(,dfCountry)
+
+
+
+
+
 
 
 # # verify that TOT corresponds to output
