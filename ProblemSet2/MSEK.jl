@@ -33,7 +33,7 @@
 #
 #   Expenditure on sector i by n
 #
-#   X_in = ∑_j γ_ijn ∑_d X_jnd + μ_in * I_n 
+#   X_in = ∑_j γ_ijn ∑_d X_jnd + μ_in * I_n
 #   I_n = W_n*L_n + R_n + D_n
 #
 #   where tariff revenue and the trade deficit are
@@ -82,13 +82,14 @@ function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::
     #   Ĉ_jn = Ŵ_n^(1-1 - ∑_k γ_jkn) * ∏_k P̂_kn^γ_jkn
     #   P̂_jn = ( ∑_o π_jon T̂_jo ( κ̂_jon Ĉ_jo )^-θ_j )^(-1/θ_j)
     P̂ = ones(size(m.μ)...)
+    κ̂ = τ̂ .* (1 .+ t′)./(1 .+ m.t)
     done = false
     iter = 0
     while !done
         iter += 1
         P̂old = copy(P̂)
-        Ĉ = Ŵ'
-        P̂ = dsum( m.Π .* T̂ .* (Ĉ ).^(.-m.θ),dims=2).^(.- 1 ./ m.θ) #CES price aggregation
+        Ĉ = Ŵ'.^(1 .- dsum(m.γ,dims=1)) .* exp.( dsum( m.γ .* addDim(log.(P̂old),2) ,dims=1) )
+        P̂ = dsum( m.Π .* T̂ .* ( κ̂ .* Ĉ ).^(.-m.θ),dims=2).^(.- 1 ./ m.θ)
         err = maximum(abs.(P̂ .- P̂old))
         done = (err < tol) || (iter ≥ maxit)
         if report
@@ -100,17 +101,16 @@ function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::
     return P̂
 end
 function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3}) where {T <:Number}
-    κ̂ = 1
-    Ĉ = Ŵ'
-    out = m.Π .* T̂ .* ( Ĉ ./ addDim(P̂,2) ).^(.-m.θ)
+    κ̂ = τ̂ .* (1 .+ t′)./(1 .+ m.t)
+    Ĉ = Ŵ'.^(1 .- dsum(m.γ,dims=1)) .* exp.( dsum( m.γ .* addDim(log.(P̂),2) ,dims=1) )
+    out = m.Π .* T̂ .* ( κ̂ .* Ĉ ./ addDim(P̂,2) ).^(.-m.θ)
     return out ./ sum(out,dims=2)
 end
-
 function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
                         t′::Array{T,3},D′::Vector{T}) where {T<:Number}
     P̂ = prices(m,Ŵ,T̂,τ̂,t′)
     Π′ = tradeShares(m,P̂,Ŵ,T̂,τ̂,t′)
-    Π̃′ = Π′ 
+    Π̃′ = Π′ ./ (1 .+ t′) 
 
 #   X′_in = ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd  + μ_in * ( Ŵ_n*W_n*L_n + ∑_jo t′_jon π̃′_jon * X′_jn  + D′_n )
 
@@ -130,6 +130,7 @@ function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
     #
     A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N]) # Feed-through in intermediate demand.
 
+    
     # Next, consider μ_in * ∑_jo t′_jon π̃′_jon * X′_jn. The matrix representation
     # of this linear operator has in × jd element of μ_in * ∑_o t′_jon π̃′_jon. Note
     # that this value doesn't depend on d. The (n,d)th J × J submatrix is
@@ -144,7 +145,6 @@ function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
     X′ = Π̃′ .* addDim(reshape(vX′,J,N),2)
     return dsum(X′,dims=(1,2)) + D′ - dsum(X′,dims=(1,3))
 end
-
 function tâtonnment(m::MSEK{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3},D′::Vector{T};
         λ = T(.0001),decay=T(.1),inflate=T(.01),tol=1e-8,maxit=1e6,report=false,reportrate=1) where {T<:Number}
     Ŵ = ones(length(m.Y))

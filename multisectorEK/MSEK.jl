@@ -77,18 +77,19 @@ struct MSEK{T}
     μ::Matrix{T}
     θ::Vector{T}
 end
+
 function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3};tol=1e-16,maxit=1e4,report=false) where {T <:Number}
     #   κ̂_jod = τ̂_jod + (1+t′_jod)/(1+t_jod)
     #   Ĉ_jn = Ŵ_n^(1-1 - ∑_k γ_jkn) * ∏_k P̂_kn^γ_jkn
     #   P̂_jn = ( ∑_o π_jon T̂_jo ( κ̂_jon Ĉ_jo )^-θ_j )^(-1/θ_j)
     P̂ = ones(size(m.μ)...)
-    κ̂ = τ̂ .* (1 .+ t′)./(1 .+ m.t)
+    κ̂ = τ̂ 
     done = false
     iter = 0
     while !done
         iter += 1
         P̂old = copy(P̂)
-        Ĉ = Ŵ'.^(1 .- dsum(m.γ,dims=1)) .* exp.( dsum( m.γ .* addDim(log.(P̂old),2) ,dims=1) )
+        Ĉ = Ŵ'
         P̂ = dsum( m.Π .* T̂ .* ( κ̂ .* Ĉ ).^(.-m.θ),dims=2).^(.- 1 ./ m.θ)
         err = maximum(abs.(P̂ .- P̂old))
         done = (err < tol) || (iter ≥ maxit)
@@ -100,17 +101,19 @@ function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::
     end
     return P̂
 end
+
 function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3}) where {T <:Number}
-    κ̂ = τ̂ .* (1 .+ t′)./(1 .+ m.t)
-    Ĉ = Ŵ'.^(1 .- dsum(m.γ,dims=1)) .* exp.( dsum( m.γ .* addDim(log.(P̂),2) ,dims=1) )
+    κ̂ = τ̂ 
+    Ĉ = Ŵ'
     out = m.Π .* T̂ .* ( κ̂ .* Ĉ ./ addDim(P̂,2) ).^(.-m.θ)
     return out ./ sum(out,dims=2)
 end
+
 function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
                         t′::Array{T,3},D′::Vector{T}) where {T<:Number}
     P̂ = prices(m,Ŵ,T̂,τ̂,t′)
     Π′ = tradeShares(m,P̂,Ŵ,T̂,τ̂,t′)
-    Π̃′ = Π′ ./ (1 .+ t′) 
+    Π̃′ = Π′
 
 #   X′_in = ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd  + μ_in * ( Ŵ_n*W_n*L_n + ∑_jo t′_jon π̃′_jon * X′_jn  + D′_n )
 

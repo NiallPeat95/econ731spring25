@@ -221,8 +221,6 @@ dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
 
 CSV.write("dfCountry.csv", dfCountry)
 
-test
-
 
 # # verify that TOT corresponds to output
 # dfOutput = @chain begin

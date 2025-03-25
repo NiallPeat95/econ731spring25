@@ -1,13 +1,13 @@
 #
 #   Using hat algebra to solve MSEK model
 #
-#   Niall Peat, 3/4/2025
+#   Nels Lind, 2/21/2025
 #
-cd("/Users/niallpeat/Documents/GitHub/econ731spring25/ProblemSet1/")
+cd("/Users/niallpeat/Documents/GitHub/econ731spring25/")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
-using Pkg; Pkg.add(["DataFrames","Chain","Plots","Distributions","LinearAlgebra","FileIO", "RData"])
-using FileIO, DataFrames, Chain, Plots, RData
+using Pkg; Pkg.add(["DataFrames","Chain","Plots","Distributions","LinearAlgebra","FileIO","CSV"])
+using FileIO, DataFrames, Chain, Plots, CSV
 using Distributions, LinearAlgebra
 
 # location of data files on your computer
@@ -218,14 +218,11 @@ dfTrade = @chain begin
     leftjoin(_,rename(dfCountry[:,[:n,:t,:ExpenditureManuf]],:n=>:d),on=[:d,:t])
 end
 dfTrade.TradeShareManuf = dfTrade.TradeFlowManuf ./ dfTrade.ExpenditureManuf
-dfTrade.TradeShareNonManuf = 
 
-using Pkg; Pkg.add("CSV")
-using CSV
 CSV.write("dfCountry.csv", dfCountry)
-names(dfCountry)
 
 test
+
 
 # # verify that TOT corresponds to output
 # dfOutput = @chain begin
