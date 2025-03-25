@@ -33,7 +33,7 @@ m = MSEK(t,Π,Y,D,γ,μ,θ)
 
 T̂ = ones(J,N)
 τ̂ = ones(J,N,N)
-t′ = m.t .+ .1
+t′ = m.t 
 D′ = copy(m.D)
 tol=1e-16;maxit=1e4;report=true
 
