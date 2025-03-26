@@ -74,8 +74,10 @@ struct MSEK{T}
     Y::Vector{T}
     D::Vector{T}
     γ::Array{T,3}
-    μ::Matrix{T}
+    α::Matrix{T}
     θ::Vector{T}
+    μ::Matrix{T}
+    Π_l::Array{T,3}
 end
 function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3};tol=1e-16,maxit=1e4,report=false) where {T <:Number}
     #   κ̂_jod = τ̂_jod + (1+t′_jod)/(1+t_jod)
@@ -90,6 +92,7 @@ function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::
         P̂old = copy(P̂)
         Ĉ = Ŵ'
         P̂ = dsum( m.Π .* T̂ .* ( Ĉ ).^(.-m.θ),dims=2).^(.- 1 ./ m.θ)
+        Ŵ = dsum( m.Π_l .* exp( m.μ̂).* (Ŵ_sn).^m.v,dims=2).^(1/m.v)
         err = maximum(abs.(P̂ .- P̂old))
         done = (err < tol) || (iter ≥ maxit)
         if report
@@ -106,6 +109,13 @@ function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T},T̂::Matrix{T},τ�
     out = m.Π .* T̂ .* ( Ĉ ./ addDim(P̂,2) ).^(.-m.θ)
     return out ./ sum(out,dims=2)
 end
+
+function laborshares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T}) where {T <:Number}
+    L_sn = 
+
+end
+
+
 function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
                         t′::Array{T,3},D′::Vector{T}) where {T<:Number}
     P̂ = prices(m,Ŵ,T̂,τ̂,t′)
@@ -128,23 +138,23 @@ function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
     #
     # γ[:,:,n] .* addDim(Π̃′[:,n,d],1)
     #
-    A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N]) # Feed-through in intermediate demand.
-
+    A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N])
     
     # Next, consider μ_in * ∑_jo t′_jon π̃′_jon * X′_jn. The matrix representation
     # of this linear operator has in × jd element of μ_in * ∑_o t′_jon π̃′_jon. Note
     # that this value doesn't depend on d. The (n,d)th J × J submatrix is
     #
     # μ[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)'
-    A2 = blockmatrix([ μ[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)' for n=1:N, d=1:N])
+    A2 = blockmatrix([ α[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)' for n=1:N, d=1:N])
 
-    vX′ = (I-A1-A2)\vec(μ .* ( Ŵ.*m.Y + D′ )')
+    vX′ = (I-A1-A2)\vec(α .* ( Ŵ.*m.Y + D′ )')
 
 #   X′_jod = π̃′_jod * X′_jd 
 #   excessDemand = ∑_jd X′_jnd + D′_n - ∑_jo X′_jon
     X′ = Π̃′ .* addDim(reshape(vX′,J,N),2)
     return dsum(X′,dims=(1,2)) + D′ - dsum(X′,dims=(1,3))
 end
+
 function tâtonnment(m::MSEK{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3},D′::Vector{T};
         λ = T(.0001),decay=T(.1),inflate=T(.01),tol=1e-8,maxit=1e6,report=false,reportrate=1) where {T<:Number}
     Ŵ = ones(length(m.Y))

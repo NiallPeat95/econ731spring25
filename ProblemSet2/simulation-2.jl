@@ -19,14 +19,20 @@ t = rand(Uniform(.01,.2),J,N,N)
 Π = [I + rand(Pareto(1,.001),N,N) for j=1:J]
 Π = [Π[j] ./ sum(Π[j],dims=1) for j=1:J]
 Π = cat(addDim.(Π,1)...,dims=1)
+
+Π_l = [I + rand(Pareto(1,.001),N,N) for j=1:J]
+Π_l = [Π[j] ./ sum(Π[j],dims=1) for j=1:J]
+Π_l = cat(addDim.(Π,1)...,dims=1)
+
 Y = rand(LogNormal(0,2.),N)
 D = rand(Uniform(-.02,.02),N) .* Y
 D = D .- mean(D)
-γ = [ I + rand(Pareto(1,.01),J,J) for n=1:N ]
+γ = [ I + rand(Pareto(1,.01),J,J) for n=1:N ]*0
 γ = cat([ rand(Uniform(.2,.3),1,J) .* γ[n] ./ sum(γ[n],dims=1) for n=1:N ]...,dims=3)
-μ = rand(Uniform(0,1),J,N)
-μ = μ ./ sum(μ,dims=1)
-#μ' = μ .* 1.01
+γ = similar(γ)  # Same structure with uninitialized values
+γ .= 0 
+α = rand(Uniform(0,1),J,N)
+α = α ./ sum(α,dims=1) # Mu is preference over sector output
 θ = rand(Uniform(2,8),J)
 
 m = MSEK(t,Π,Y,D,γ,μ,θ)
