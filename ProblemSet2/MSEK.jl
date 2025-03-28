@@ -20,7 +20,7 @@
 #
 #   P_n = ∏_j P_jn^μ_jn
 #
-#   π_od = ∑_j π_jod * μ_jn
+#   π_od = ∑_j π_jod * μ_jn 
 #
 #   Cobb-Douglas production with γ_jkn = cost share of sector k in sector j
 #       within country n. Share of value added = 1 - ∑_k γ_jkn
@@ -111,16 +111,16 @@ function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T},T̂::Matrix{T},τ�
 end
 
 function laborshares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T}) where {T <:Number}
-    L_sn = 
-
+    out = m.Π_l .* exp(m.μ̂).* (addDim(Ŵ,2)).^m.v
+    return out ./ sum(out,dims=2)
 end
-
 
 function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
                         t′::Array{T,3},D′::Vector{T}) where {T<:Number}
     P̂ = prices(m,Ŵ,T̂,τ̂,t′)
     Π′ = tradeShares(m,P̂,Ŵ,T̂,τ̂,t′)
     Π̃′ = Π′ 
+    Π_l' = laborshares(m,P̂,Ŵ)
 
 #   X′_in = ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd  + μ_in * ( Ŵ_n*W_n*L_n + ∑_jo t′_jon π̃′_jon * X′_jn  + D′_n )
 

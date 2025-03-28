@@ -32,7 +32,7 @@ D = D .- mean(D)
 γ = similar(γ)  # Same structure with uninitialized values
 γ .= 0 
 α = rand(Uniform(0,1),J,N)
-α = α ./ sum(α,dims=1) # Mu is preference over sector output
+α = α ./ sum(α,dims=1) # alpha is preference over sector output
 θ = rand(Uniform(2,8),J)
 
 m = MSEK(t,Π,Y,D,γ,μ,θ)
