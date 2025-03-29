@@ -19,14 +19,14 @@
 include("utilities.jl")
 
 struct MSEK{T}
-    Π::Array{T,3}
-    Y::Vector{T}
-    D::Vector{T}
-    α::Matrix{T,2}
-    θ::Vector{T} # Trade elasticities for each sector j
-    μ::Matrix{T,2} # Preference parameters for final demand in each sector j and country n
-    Π_l::Array{T,3}
-    v::Array{T}
+    Π::Array{T, 3}  # 3D array for Π
+    Y::Vector{T}    # 1D vector for Y
+    D::Vector{T}    # 1D vector for D
+    α::Matrix{T}    # 2D matrix for α
+    θ::Vector{T}    # 1D vector for θ
+    μ::Matrix{T}    # 2D matrix for μ
+    Π_l::Array{T, 3} # 3D array for Π_l
+    v::Vector{T}    # 1D vector for v
 end
 
 function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T}, μ̂::Array{T,2}, ;tol=1e-16,maxit=1e4,report=false) where {T <:Number}

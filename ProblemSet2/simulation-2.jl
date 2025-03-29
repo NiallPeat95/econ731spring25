@@ -41,7 +41,6 @@ v = 0.5
 
 include("MSEK.jl")
 
-
 # Create an MSEK instance with the updated struct
 m = MSEK(Π, Y, D, α, θ, μ, Π_l, v)
 
