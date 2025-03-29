@@ -5,57 +5,7 @@
 #   Nels Lind, 2/21/2025
 #
 #   j = 1,…,J, sectors
-#
-#   P_jn = ( ∑_o T_jo ( κ_jon C_jo )^-θ_j )^(-1/θ_j)
-#
-#   where κ_jon combines physical trade costs and tariffs in sector j
-#
-#   κ_jod = τ_jod * (1 + t_jod)
-#
-#   Within sector j, fraction of goods sourced from o by d
-#
-#   π_jod = T_jo ( κ_jod C_jo )^-θ_j / P_jn )^(-1/θ_j)
-#
-#   Cobb-Douglas preferences for sectoral composites with shares μ_jn
-#
-#   P_n = ∏_j P_jn^μ_jn
-#
-#   π_od = ∑_j π_jod * μ_jn 
-#
-#   Cobb-Douglas production with γ_jkn = cost share of sector k in sector j
-#       within country n. Share of value added = 1 - ∑_k γ_jkn
-#
-#   C_jn = W_n^(1-1 - ∑_i γ_ijn) * ∏_i P_in^γ_ijn
-#
-#   Imports and exports (excluding tariff payments)
-#
-#   X_jod = π_jod * X_jd / (1 + t_jod)
-#
-#   Expenditure on sector i by n
-#
-#   X_in = ∑_j γ_ijn ∑_d X_jnd + μ_in * I_n
-#   I_n = W_n*L_n + R_n + D_n
-#
-#   where tariff revenue and the trade deficit are
-#
-#   R_n = ∑_jo t_jon X_jon
-#   D_n = ∑_jo X_jon - ∑_jd X_jnd
-#
-#   Hat Algebra:
-#
-#   For any given change in fundmanetals (T̂_n,τ̂_od) and counterfatual tariffs t′_jod
-#       and deficits D′_n
-#
-#   κ̂_jod = τ̂_jod + (1+t′_jod)/(1+t_jod)
-#   Ĉ_jn = Ŵ_n^(1-1 - ∑_i γ_ijn) * ∏_i P̂_in^γ_ijn
-#   P̂_jn = ( ∑_o π_jon T̂_jo ( κ̂_jon Ĉ_jo )^-θ_j )^(-1/θ_j)
-#   π̂_jod = T̂_jo ( κ̂_jod Ĉ_jo )^-θ_j / P̂_jn )^(-1/θ_j)
-#   X′_jod = π′_jod * X′_jd / (1 + t_jod)
-#   X′_in = ∑_j γ_ijn ∑_d X′_jnd + μ_in * I′_n
-#   I′_n = Ŵ_n*W_n*L_n + R′_n + D′_n
-#   R′n = ∑_jo t′_jon X′_jon
-#   ∑_jo X′_jon = ∑_jd X′_jnd + D′_n
-#
+
 #   The data requirements are then:
 #
 #   π_jod = sectoral trade shares
@@ -69,22 +19,19 @@
 include("utilities.jl")
 
 struct MSEK{T}
-    t::Array{T,3}
     Π::Array{T,3}
     Y::Vector{T}
     D::Vector{T}
-    γ::Array{T,3}
-    α::Matrix{T}
-    θ::Vector{T}
-    μ::Matrix{T}
+    α::Matrix{T,2}
+    θ::Vector{T} # Trade elasticities for each sector j
+    μ::Matrix{T,2} # Preference parameters for final demand in each sector j and country n
     Π_l::Array{T,3}
+    v::Array{T}
 end
-function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3};tol=1e-16,maxit=1e4,report=false) where {T <:Number}
-    #   κ̂_jod = τ̂_jod + (1+t′_jod)/(1+t_jod)
-    #   Ĉ_jn = Ŵ_n^(1-1 - ∑_k γ_jkn) * ∏_k P̂_kn^γ_jkn
-    #   P̂_jn = ( ∑_o π_jon T̂_jo ( κ̂_jon Ĉ_jo )^-θ_j )^(-1/θ_j)
+
+function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T}, μ̂::Array{T,2}, ;tol=1e-16,maxit=1e4,report=false) where {T <:Number}
+ 
     P̂ = ones(size(m.μ)...)
-    κ̂ = τ̂ 
     done = false
     iter = 0
     while !done
@@ -92,7 +39,7 @@ function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::
         P̂old = copy(P̂)
         Ĉ = Ŵ'
         P̂ = dsum( m.Π .* T̂ .* ( Ĉ ).^(.-m.θ),dims=2).^(.- 1 ./ m.θ)
-        Ŵ = dsum( m.Π_l .* exp( m.μ̂).* (Ŵ_sn).^m.v,dims=2).^(1/m.v)
+        Ŵ = dsum( m.Π_l .* exp(μ̂).* (Ŵ_sn).^m.v,dims=2).^(1/m.v)
         err = maximum(abs.(P̂ .- P̂old))
         done = (err < tol) || (iter ≥ maxit)
         if report
@@ -120,7 +67,7 @@ function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
     P̂ = prices(m,Ŵ,T̂,τ̂,t′)
     Π′ = tradeShares(m,P̂,Ŵ,T̂,τ̂,t′)
     Π̃′ = Π′ 
-    Π_l' = laborshares(m,P̂,Ŵ)
+    Π_l′ = laborshares(m,P̂,Ŵ)
 
 #   X′_in = ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd  + μ_in * ( Ŵ_n*W_n*L_n + ∑_jo t′_jon π̃′_jon * X′_jn  + D′_n )
 
@@ -151,8 +98,8 @@ function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
 
 #   X′_jod = π̃′_jod * X′_jd 
 #   excessDemand = ∑_jd X′_jnd + D′_n - ∑_jo X′_jon
-    X′ = Π̃′ .* addDim(reshape(vX′,J,N),2)
-    return dsum(X′,dims=(1,2)) + D′ - dsum(X′,dims=(1,3))
+X′ = Π′ .* (m.μ .* (Ŵ .* m.Y .+ D′)')
+return sum(X′, dims=(1,2)) + D′ - sum(X′, dims=(1,3))
 end
 
 function tâtonnment(m::MSEK{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3},D′::Vector{T};
