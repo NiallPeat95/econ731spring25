@@ -29,7 +29,7 @@ struct MSEK{T}
     v::Vector{T}    # 1D vector for v
 end
 
-function prices(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T}, μ̂::Matrix{T}, ;tol=1e-16,maxit=1e4,report=false) where {T <:Number}
+function prices(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T} ;tol=1e-16,maxit=1e4,report=false) where {T <:Number}
     P̂ = ones(size(m.μ))
     done = false
     iter = 0
@@ -37,8 +37,8 @@ function prices(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T}, μ̂::Matrix{T}, ;tol=
         iter += 1
         P̂old = copy(P̂)
         @show P̂old
-        Ĉ = Ŵ
-        P̂ = dsum( m.Π' .* T̂ .* ( Ĉ ).^(.-m.θ),dims=1).^(.- 1 ./ m.θ)
+        Ĉ = Ŵ          
+        P̂ = dsum( m.Π .* T̂ .* ( Ĉ ).^(.-m.θ),dims=2).^(.- 1 ./ m.θ)
         # Ŵ = dsum( m.Π_l .* exp.(μ̂).* (Ŵ_sn).^m.v,dims=2).^(1/m.v)
         err = maximum(abs.(P̂ .- P̂old))
         done = (err < tol) || (iter ≥ maxit)
@@ -63,8 +63,8 @@ function laborshares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T}) where {T <:Number
     return out ./ sum(out,dims=2)
 end
 
-function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},D′::Vector{T}) where {T<:Number}
-    P̂ = prices(m,Ŵ,T̂,μ̂)
+function excessDemand(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T},D′::Vector{T}) where {T<:Number}
+    P̂ = prices(m,Ŵ,T̂)
     Π′ = tradeShares(m,P̂,Ŵ,T̂)
     Π̃′ = Π′ 
     Π_l′ = laborshares(m,P̂,Ŵ)
@@ -104,7 +104,7 @@ return sum(X′, dims=(1,2)) + D′ - sum(X′, dims=(1,3))
 end
 
 function tâtonnment(m::MSEK{T},T̂::Matrix{T},D′::Vector{T}; λ = T(.0001),decay=T(.1),inflate=T(.01),tol=1e-8,maxit=1e6,report=false,reportrate=1) where {T<:Number}
-    Ŵ = ones(length(m.Y))
+    Ŵ = ones(size(m.μ))
     done = false
     iter = 0
     err = Inf
