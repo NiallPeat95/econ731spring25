@@ -7,8 +7,8 @@
 cd("/Users/niallpeat/Documents/GitHub/econ731spring25/ProblemSet2")
 using Pkg
 Pkg.activate("."); Pkg.instantiate()
-#using Pkg; Pkg.add(["FileIO", "DataFrames", "Chain", "Plots", "Distributions", "LinearAlgebra"])
-#using FileIO, DataFrames, Chain, Plots, Distributions, LinearAlgebra, FileIO
+using Pkg; Pkg.add(["FileIO", "DataFrames", "Chain", "Plots", "Distributions", "LinearAlgebra"])
+using FileIO, DataFrames, Chain, Plots, Distributions, LinearAlgebra, FileIO
 
 include("MSEK.jl")
 
@@ -32,12 +32,13 @@ D = D .- mean(D)
 α = rand(Uniform(0, 1), J, N)
 α = α ./ sum(α, dims=1)  # alpha is preference over sector output
 θ = rand(Uniform(2, 8), J)
+θ = repeat(reshape(θ, 1, J), N, 1)
 
 # μ is a J*N matrix of labor supply preferences
 μ = rand(Uniform(0.1, 0.5), J, N)  # Random values for μ that are preference for labor supply in sector j and country n
 
 # v is a constant float64 value (0.5)
-v = 0.5
+v = ones(J)*0.5
 
 include("MSEK.jl")
 
@@ -45,18 +46,19 @@ include("MSEK.jl")
 m = MSEK(Π, Y, D, α, θ, μ, Π_l, v)
 
 T̂ = ones(J,N)
-τ̂ = ones(J,N,N)
 μ̂ = ones(J, N)
+
 # Set the entry for China-Manufacturing (you can specify the exact row/column indices)
 μ̂[10, 23] = 1.1  # or another value depending on your needs
 
-t′ = m.t 
 D′ = copy(m.D)
 tol=1e-16;maxit=1e4;report=true
 
 sum(Π,dims=2)
 
-Ŵ = tâtonnment(m,T̂,τ̂,t′,D′,report=true)
+include("MSEK.jl")
+
+Ŵ = tâtonnment(m,T̂,D′,report=true)
 
 P̂ = exp.(dsum(μ.*log.(prices(m,Ŵ,T̂,τ̂,t′)),dims=1))
 

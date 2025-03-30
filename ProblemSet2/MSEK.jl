@@ -23,23 +23,23 @@ struct MSEK{T}
     Y::Vector{T}    # 1D vector for Y
     D::Vector{T}    # 1D vector for D
     α::Matrix{T}    # 2D matrix for α
-    θ::Vector{T}    # 1D vector for θ
+    θ::Matrix{T}    # 1D vector for θ
     μ::Matrix{T}    # 2D matrix for μ
     Π_l::Array{T, 3} # 3D array for Π_l
     v::Vector{T}    # 1D vector for v
 end
 
-function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T}, μ̂::Array{T,2}, ;tol=1e-16,maxit=1e4,report=false) where {T <:Number}
- 
-    P̂ = ones(size(m.μ)...)
+function prices(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T}, μ̂::Matrix{T}, ;tol=1e-16,maxit=1e4,report=false) where {T <:Number}
+    P̂ = ones(size(m.μ))
     done = false
     iter = 0
     while !done
         iter += 1
         P̂old = copy(P̂)
-        Ĉ = Ŵ'
-        P̂ = dsum( m.Π .* T̂ .* ( Ĉ ).^(.-m.θ),dims=2).^(.- 1 ./ m.θ)
-        Ŵ = dsum( m.Π_l .* exp(μ̂).* (Ŵ_sn).^m.v,dims=2).^(1/m.v)
+        @show P̂old
+        Ĉ = Ŵ
+        P̂ = dsum( m.Π' .* T̂ .* ( Ĉ ).^(.-m.θ),dims=1).^(.- 1 ./ m.θ)
+        # Ŵ = dsum( m.Π_l .* exp.(μ̂).* (Ŵ_sn).^m.v,dims=2).^(1/m.v)
         err = maximum(abs.(P̂ .- P̂old))
         done = (err < tol) || (iter ≥ maxit)
         if report
@@ -50,6 +50,7 @@ function prices(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T}, μ̂::Array{T,2}, ;tol
     end
     return P̂
 end
+
 function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3}) where {T <:Number}
     κ̂ = τ̂ 
     Ĉ = Ŵ'
@@ -62,12 +63,12 @@ function laborshares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T}) where {T <:Number
     return out ./ sum(out,dims=2)
 end
 
-function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},
-                        t′::Array{T,3},D′::Vector{T}) where {T<:Number}
-    P̂ = prices(m,Ŵ,T̂,τ̂,t′)
-    Π′ = tradeShares(m,P̂,Ŵ,T̂,τ̂,t′)
+function excessDemand(m::MSEK{T},Ŵ::Vector{T},T̂::Matrix{T},D′::Vector{T}) where {T<:Number}
+    P̂ = prices(m,Ŵ,T̂,μ̂)
+    Π′ = tradeShares(m,P̂,Ŵ,T̂)
     Π̃′ = Π′ 
     Π_l′ = laborshares(m,P̂,Ŵ)
+
 
 #   X′_in = ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd  + μ_in * ( Ŵ_n*W_n*L_n + ∑_jo t′_jon π̃′_jon * X′_jn  + D′_n )
 
@@ -102,8 +103,7 @@ X′ = Π′ .* (m.μ .* (Ŵ .* m.Y .+ D′)')
 return sum(X′, dims=(1,2)) + D′ - sum(X′, dims=(1,3))
 end
 
-function tâtonnment(m::MSEK{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3},D′::Vector{T};
-        λ = T(.0001),decay=T(.1),inflate=T(.01),tol=1e-8,maxit=1e6,report=false,reportrate=1) where {T<:Number}
+function tâtonnment(m::MSEK{T},T̂::Matrix{T},D′::Vector{T}; λ = T(.0001),decay=T(.1),inflate=T(.01),tol=1e-8,maxit=1e6,report=false,reportrate=1) where {T<:Number}
     Ŵ = ones(length(m.Y))
     done = false
     iter = 0
@@ -113,7 +113,7 @@ function tâtonnment(m::MSEK{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3
         iter += 1
         Ŵold = copy(Ŵ)
         errold = copy(err)
-        ed = excessDemand(m,Ŵ,T̂,τ̂,t′,D′)
+        ed = excessDemand(m,Ŵ,T̂,D′)
         Ŵ = Ŵold .* (1 .+ λ .* ed ./ (Ŵold .* m.Y))
         err = maximum(abs.(Ŵ .- Ŵold))
         done = (err < tol) || (iter ≥ maxit)
