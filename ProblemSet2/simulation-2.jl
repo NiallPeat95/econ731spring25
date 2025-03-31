@@ -21,26 +21,23 @@ N = 44
 Π = [Π[j] ./ sum(Π[j], dims=1) for j = 1:J]
 Π = cat(addDim.(Π, 1)..., dims=1)
 
-Π_l = [I + rand(Pareto(1, 0.001), N, N) for j = 1:J]
-Π_l = [Π_l[j] ./ sum(Π_l[j], dims=1) for j = 1:J]
-Π_l = cat(addDim.(Π_l, 1)..., dims=1)
+
+Π_l = rand(Pareto(1, 0.001), J, N)
+Π_l = Π_l./ sum(Π_l, dims=1)
 
 # Generate other random values
-Y = rand(LogNormal(0, 2.), N)
-D = rand(Uniform(-0.02, 0.02), N) .* Y
+Y = rand(LogNormal(0, 2.),J, N)
+D = vec(rand(Uniform(-0.02, 0.02), N) .* sum(Y,dims=1)')  # Trade deficits as a fraction of total output
 D = D .- mean(D)
 α = rand(Uniform(0, 1), J, N)
 α = α ./ sum(α, dims=1)  # alpha is preference over sector output
 θ = rand(Uniform(2, 8), J)
-θ = repeat(reshape(θ, 1, J), N, 1)
 
 # μ is a J*N matrix of labor supply preferences
 μ = rand(Uniform(0.1, 0.5), J, N)  # Random values for μ that are preference for labor supply in sector j and country n
 
 # v is a constant float64 value (0.5)
 v = ones(J)*0.5
-
-include("MSEK.jl")
 
 # Create an MSEK instance with the updated struct
 m = MSEK(Π, Y, D, α, θ, μ, Π_l, v)
@@ -49,12 +46,10 @@ T̂ = ones(J,N)
 μ̂ = ones(J, N)
 
 # Set the entry for China-Manufacturing (you can specify the exact row/column indices)
-μ̂[10, 23] = 1.1  # or another value depending on your needs
+#μ̂[10, 23] = 1.1  # or another value depending on your needs
 
 D′ = copy(m.D)
 tol=1e-16;maxit=1e4;report=true
-
-sum(Π,dims=2)
 
 include("MSEK.jl")
 

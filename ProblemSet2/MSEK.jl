@@ -20,12 +20,12 @@ include("utilities.jl")
 
 struct MSEK{T}
     Π::Array{T, 3}  # 3D array for Π
-    Y::Vector{T}    # 1D vector for Y
+    Y::Matrix{T}    # 1D vector for Y
     D::Vector{T}    # 1D vector for D
     α::Matrix{T}    # 2D matrix for α
-    θ::Matrix{T}    # 1D vector for θ
+    θ::Vector{T}    # 1D vector for θ
     μ::Matrix{T}    # 2D matrix for μ
-    Π_l::Array{T, 3} # 3D array for Π_l
+    Π_l::Matrix{T} # 3D array for Π_l
     v::Vector{T}    # 1D vector for v
 end
 
@@ -51,23 +51,23 @@ function prices(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T} ;tol=1e-16,maxit=1e4,re
     return P̂
 end
 
-function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T},T̂::Matrix{T},τ̂::Array{T,3},t′::Array{T,3}) where {T <:Number}
-    κ̂ = τ̂ 
-    Ĉ = Ŵ'
-    out = m.Π .* T̂ .* ( Ĉ ./ addDim(P̂,2) ).^(.-m.θ)
+function tradeShares(m::MSEK{T},P̂::Matrix{T},Ŵ::Matrix{T},T̂::Matrix{T}) where {T <:Number}
+    Ĉ = Ŵ
+    out = m.Π .* T̂ .* ( Ĉ ./ P̂ ).^(-m.θ)
     return out ./ sum(out,dims=2)
 end
 
-function laborshares(m::MSEK{T},P̂::Matrix{T},Ŵ::Vector{T}) where {T <:Number}
-    out = m.Π_l .* exp(m.μ̂).* (addDim(Ŵ,2)).^m.v
-    return out ./ sum(out,dims=2)
+function laborshares(m::MSEK{T},P̂::Matrix{T},Ŵ::Matrix{T},μ̂::Matrix{T}) where {T <:Number}
+    out = m.Π_l .* exp.(μ̂) .* (Ŵ).^ m.v
+    return out ./ sum(out,dims=1)
 end
 
 function excessDemand(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T},D′::Vector{T}) where {T<:Number}
     P̂ = prices(m,Ŵ,T̂)
     Π′ = tradeShares(m,P̂,Ŵ,T̂)
     Π̃′ = Π′ 
-    Π_l′ = laborshares(m,P̂,Ŵ)
+    Π_l′ = laborshares(m,P̂,Ŵ,μ̂)
+
 
 
 #   X′_in = ∑_j γ_ijn ∑_d π̃′_jnd * X′_jd  + μ_in * ( Ŵ_n*W_n*L_n + ∑_jo t′_jon π̃′_jon * X′_jn  + D′_n )
@@ -86,21 +86,28 @@ function excessDemand(m::MSEK{T},Ŵ::Matrix{T},T̂::Matrix{T},D′::Vector{T}) 
     #
     # γ[:,:,n] .* addDim(Π̃′[:,n,d],1)
     #
-    A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N])
+    #A1 = blockmatrix([ γ[:,:,n] .* addDim(Π̃′[:,n,d],1) for n=1:N, d=1:N])
     
     # Next, consider μ_in * ∑_jo t′_jon π̃′_jon * X′_jn. The matrix representation
     # of this linear operator has in × jd element of μ_in * ∑_o t′_jon π̃′_jon. Note
     # that this value doesn't depend on d. The (n,d)th J × J submatrix is
     #
     # μ[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)'
-    A2 = blockmatrix([ α[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)' for n=1:N, d=1:N])
+    #A2 = blockmatrix([ α[:,n] * sum(t′[:,:,n].*Π̃′[:,:,n],dims=2)' for n=1:N, d=1:N])
 
-    vX′ = (I-A1-A2)\vec(α .* ( Ŵ.*m.Y + D′ )')
+    #vX′ = (I-A1-A2)\vec(α .* ( Ŵ.*m.Y + D′ )')
 
 #   X′_jod = π̃′_jod * X′_jd 
 #   excessDemand = ∑_jd X′_jnd + D′_n - ∑_jo X′_jon
-X′ = Π′ .* (m.μ .* (Ŵ .* m.Y .+ D′)')
-return sum(X′, dims=(1,2)) + D′ - sum(X′, dims=(1,3))
+    X′ = Π′ .* (m.α .* (Ŵ .* m.Y))
+
+    X_d = sum(X′, dims=3) # Sum over d to get X′_jnd
+    X_s = sum(X′, dims=2) # Sum over j to get X′_jon
+    X_s = reshape(X_s, 56, 44,1)
+    output = X_d-X_s
+    output = dropdims(output, dims=3)
+return output
+#sum(X′, dims=(1,2)) - sum(X′, dims=(1,3))
 end
 
 function tâtonnment(m::MSEK{T},T̂::Matrix{T},D′::Vector{T}; λ = T(.0001),decay=T(.1),inflate=T(.01),tol=1e-8,maxit=1e6,report=false,reportrate=1) where {T<:Number}
@@ -114,7 +121,7 @@ function tâtonnment(m::MSEK{T},T̂::Matrix{T},D′::Vector{T}; λ = T(.0001),d
         Ŵold = copy(Ŵ)
         errold = copy(err)
         ed = excessDemand(m,Ŵ,T̂,D′)
-        Ŵ = Ŵold .* (1 .+ λ .* ed ./ (Ŵold .* m.Y))
+        Ŵ = Ŵold .* (1 .+ λ .* ed ./(Ŵold))   #.* m.Y
         err = maximum(abs.(Ŵ .- Ŵold))
         done = (err < tol) || (iter ≥ maxit)
         if err < errold

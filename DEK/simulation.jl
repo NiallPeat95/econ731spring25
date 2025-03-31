@@ -5,10 +5,10 @@
 #
 
 
-cd("/Users/niallpeat/Documents/GitHub/econ731spring25/replication_dek/")
-#using Pkg; Pkg.add(["FileIO", "DataFrames", "Chain", "Plots", "Distributions", "LinearAlgebra"])
-#using FileIO, DataFrames, Chain, Plots
-#using Distributions, LinearAlgebra
+cd("/Users/niallpeat/Documents/GitHub/econ731spring25/DEK")
+using Pkg; Pkg.add(["FileIO", "DataFrames", "Chain", "Plots", "Distributions", "LinearAlgebra"])
+using FileIO, DataFrames, Chain, Plots
+using Distributions, LinearAlgebra
 
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 

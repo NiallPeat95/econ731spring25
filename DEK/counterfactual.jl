@@ -4,7 +4,7 @@
 #   Nels Lind, 2/13/2025
 #
 
-cd("/Users/niallpeat/Documents/GitHub/econ731spring25/replication_dek/")
+cd("/Users/niallpeat/Documents/GitHub/econ731spring25/DEK")
 using Pkg; Pkg.add(["FileIO","DataFrames","Chain","Plots","Distributions","LinearAlgebra", "RData"])
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 using FileIO, DataFrames, Chain, Plots
